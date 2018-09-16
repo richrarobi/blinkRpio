@@ -11,7 +11,9 @@ wiringpi library (I personally like the broadcom numbering and couldn't find a B
 Hence this port.
 
 sudo apt-get install rpi.gpio
+
 sudo apt-get update
+
 sudo apt-get upgrade
 
 go get github.com/stianeikeland/go-rpio
