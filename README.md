@@ -17,5 +17,8 @@ sudo apt-get update
 sudo apt-get upgrade
 
 go get github.com/stianeikeland/go-rpio
+go get github.com/richrarobi/blinkRpio
+
+see examples
 
 Rich Robinson
