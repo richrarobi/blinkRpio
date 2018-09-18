@@ -2,15 +2,12 @@
 // Rich Robinson
 // Sept 2018
 
-package main
+package blinkRpio
 
 import (
     "os"
     "fmt"
     "time"
-    "os/signal"
-    "syscall"
-    "math/rand"
     "github.com/stianeikeland/go-rpio"
 )
 
@@ -18,6 +15,8 @@ const (
     dat  = rpio.Pin(23)
     clk  = rpio.Pin(24)
     numPx = 8
+// used luminance instead of brightness
+// note values 0 to 31 instead of float
     luminance = 3
     redI = 0
     greenI = 1
@@ -40,26 +39,25 @@ var (
     blinkt [numPx]Blinkt
 )
 
-func exit() {
+func Exit() {
     if clearOnExit {
-        clear()
-        show()
+        Clear()
+        Show()
         rpio.Close()
     }
 }
 
-func setLuminance( lum int) {
+func SetLuminance( lum int) {
     for i := range blinkt { 
         blinkt[i].pix[lumI] = lum
     }
 }
 
-func clear() {
+func Clear() {
     for i := range blinkt { 
         blinkt[i].pix[redI] = 0
         blinkt[i].pix[greenI] = 0
         blinkt[i].pix[blueI] = 0
-        blinkt[i].pix[lumI] = 0
     }
 }
 
@@ -93,8 +91,8 @@ func sof() {
     }
 }
 
-func show() {
-    if gpioSetUp == false { setup() }
+func Show() {
+    if gpioSetUp == false { Setup() }
     sof()
     for i:= range blinkt {
         r := blinkt[i].pix[ redI]
@@ -110,20 +108,20 @@ func show() {
     eof()
 }
 
-func setAll(r int, g int, b int, l int) {
+func SetAll(r int, g int, b int, l int) {
     for i := 0; i < numPx; i++ {
-        setPixel( i, r&255, g&255, b&255, l&31)
+        SetPixel( i, r&255, g&255, b&255, l&31)
     }
 }
 
-func setPixel(p int, r int, g int, b int, l int) {
+func SetPixel(p int, r int, g int, b int, l int) {
     blinkt[p].pix[redI] = r & 255
     blinkt[p].pix[greenI] = g & 255
     blinkt[p].pix[blueI] = b & 255
     blinkt[p].pix[lumI] = l & 31
 }
 
-func getPixel(p int) ( r int, g int, b int, l int ) {
+func GetPixel(p int) ( r int, g int, b int, l int ) {
     r = blinkt[p].pix[ redI]
     g = blinkt[p].pix[ greenI]
     b = blinkt[p].pix[ blueI]
@@ -131,7 +129,7 @@ func getPixel(p int) ( r int, g int, b int, l int ) {
     return r, g, b, l
 }
 
-func setclearOnExit(ce bool) {
+func SetclearOnExit(ce bool) {
     clearOnExit = ce
 }
 
@@ -139,7 +137,7 @@ func delay(ms int) {
     time.Sleep(time.Duration(ms) * time.Millisecond)
 }
 
-func setup() () {
+func Setup() {
     if gpioSetUp == false {
         if  err := rpio.Open(); err != nil {
             fmt.Println(err)
@@ -148,41 +146,5 @@ func setup() () {
         dat.Output()
         clk.Output()
         gpioSetUp = true
-    }
-}
-
-func main() {
-// used for testing
-// initialise getout
-    signalChannel := make(chan os.Signal, 2)
-    signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM)
-    go func() {
-        sig := <-signalChannel
-        switch sig {
-        case os.Interrupt:
-            fmt.Println("Stopping on Interrupt")
-            time.Sleep(2 * time.Second)
-            exit()
-            os.Exit(1)
-        case syscall.SIGTERM:
-            fmt.Println("Stopping on Terminate")
-            time.Sleep(2 * time.Second)
-            exit()
-            os.Exit(0)
-        }
-    }()
-
-    setup()
-    setLuminance(1)
-    clear()
-    show()
-
-    for {
-        pixel := rand.Intn(8)
-        setPixel( pixel, rand.Intn(255), rand.Intn(255), rand.Intn(255), rand.Intn(31) )
-        r,g,b,l := getPixel( pixel)
-        show()
-        fmt.Println("getPixel", pixel, r,g,b,l )
-        delay(150)
     }
 }
